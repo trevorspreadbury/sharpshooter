@@ -1,0 +1,82 @@
+<main
+  id="game-shell"
+  hx-get="/snapshot"
+  hx-trigger="every 125ms [!window.sharpshooterPausePolling]"
+  hx-swap="outerHTML"
+>
+  <section class="page">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Local Simulation</p>
+        <h1>Sharpshooter</h1>
+        <p class="status">{{ snapshot.status_text }}</p>
+      </div>
+      <form hx-post="/restart" hx-target="#game-shell" hx-swap="outerHTML">
+        <button class="restart" type="submit">Restart</button>
+      </form>
+    </header>
+
+    <section class="hud">
+      <article>
+        <span>Level</span>
+        <strong>{{ snapshot.level }}</strong>
+      </article>
+      <article>
+        <span>Lives</span>
+        <strong>{{ snapshot.lives }}</strong>
+      </article>
+      <article>
+        <span>Time</span>
+        <strong>{{ "%.1f"|format(snapshot.time_remaining) }}s</strong>
+      </article>
+      <article>
+        <span>Phase</span>
+        <strong>{{ snapshot.phase.value.replace("_", " ").title() }}</strong>
+      </article>
+      <article class="speed-panel">
+        <span>Speed</span>
+        <form hx-post="/speed" hx-target="#game-shell" hx-swap="outerHTML">
+          <select
+            name="speed"
+            class="speed-select"
+            onfocus="window.sharpshooterPausePolling = true"
+            onchange="window.sharpshooterPausePolling = false; this.form.requestSubmit()"
+            onblur="window.sharpshooterPausePolling = false"
+          >
+            {% for option in speed_options %}
+              <option value="{{ option }}" {% if option == speed_multiplier %}selected{% endif %}>
+                {% if option == 1.0 %}Normal{% elif option == 0.5 %}Half{% elif option == 0.25 %}Quarter{% else %}Eighth{% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </form>
+      </article>
+    </section>
+
+    <section class="board-wrap">
+      <div class="board">
+        {% for row in snapshot.board %}
+          {% for cell in row %}
+            {% if cell.clickable and snapshot.phase.value == "playing" %}
+              <button
+                class="cell tile-{{ cell.tile.value|lower }} clickable"
+                hx-post="/fire/{{ cell.row }}/{{ cell.col }}"
+                hx-target="#game-shell"
+                hx-swap="outerHTML"
+                hx-trigger="mousedown"
+                type="button"
+                aria-label="Fire orange at row {{ cell.row }}, column {{ cell.col }}"
+              >
+                {% if cell.tile.value != "O" %}{{ cell.tile.value }}{% endif %}
+              </button>
+            {% else %}
+              <div class="cell tile-{{ cell.tile.value|lower }}">
+                {% if cell.tile.value != "O" %}{{ cell.tile.value }}{% endif %}
+              </div>
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+      </div>
+    </section>
+  </section>
+</main>

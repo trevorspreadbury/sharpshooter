@@ -1,0 +1,2 @@
+"""Sharpshooter package."""
+

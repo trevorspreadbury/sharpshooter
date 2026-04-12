@@ -1,0 +1,59 @@
+"""HTTP tests for the Sharpshooter app."""
+
+from fastapi.testclient import TestClient
+
+from sharpshooter.main import create_app
+from sharpshooter.service import GameService
+
+
+def test_index_renders_game() -> None:
+    """The root page renders the game shell."""
+    client = TestClient(create_app(service=GameService()))
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "Sharpshooter" in response.text
+    assert "Level 1 in progress." in response.text
+    assert 'name="speed"' in response.text
+    assert 'onchange="window.sharpshooterPausePolling = false; this.form.requestSubmit()"' in response.text
+    assert 'every 125ms [!window.sharpshooterPausePolling]' in response.text
+    assert 'onfocus="window.sharpshooterPausePolling = true"' in response.text
+
+
+def test_fire_endpoint_updates_board() -> None:
+    """Firing removes the clicked orange from the edge."""
+    service = GameService()
+    client = TestClient(create_app(service=service))
+
+    response = client.post("/fire/0/0")
+
+    assert response.status_code == 200
+    assert 'hx-post="/fire/0/0"' not in response.text
+    assert service.state.level.projectiles
+
+
+def test_restart_resets_state() -> None:
+    """Restart creates a fresh level-one game."""
+    service = GameService()
+    client = TestClient(create_app(service=service))
+    client.post("/fire/0/1")
+
+    response = client.post("/restart")
+
+    assert response.status_code == 200
+    assert service.state.level.level_id == 1
+    assert len(service.state.level.edge_oranges) == 32
+    assert service.speed_multiplier == 1.0
+
+
+def test_speed_endpoint_updates_multiplier() -> None:
+    """Changing the dropdown updates the service speed."""
+    service = GameService()
+    client = TestClient(create_app(service=service))
+
+    response = client.post("/speed", data={"speed": "0.25"})
+
+    assert response.status_code == 200
+    assert service.speed_multiplier == 0.25
+    assert '<option value="0.25" selected>' in response.text
