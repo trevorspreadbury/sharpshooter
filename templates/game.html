@@ -4,12 +4,24 @@
       <div>
         <p class="eyebrow">Local Simulation</p>
         <h1>Sharpshooter</h1>
-        <p class="status">{{ snapshot.status_text }}</p>
+        <p class="status">
+          {% if not started %}
+            Ready to start level {{ selected_level }}.
+          {% elif countdown_remaining is not none %}
+            Starting in {{ "%.1f"|format(countdown_remaining) }}s
+          {% else %}
+            {{ snapshot.status_text }}
+          {% endif %}
+        </p>
       </div>
       <div class="hero-actions">
-        <button class="restart" type="button" data-post-url="/pause">
-          {% if paused %}Resume{% else %}Pause{% endif %}
-        </button>
+        {% if not started %}
+          <button class="restart" type="button" data-post-url="/start">Start</button>
+        {% elif countdown_remaining is none %}
+          <button class="restart" type="button" data-post-url="/pause">
+            {% if paused %}Resume{% else %}Pause{% endif %}
+          </button>
+        {% endif %}
         <button class="restart" type="button" data-post-url="/restart">Restart</button>
       </div>
     </header>
@@ -33,7 +45,12 @@
       </article>
       <article>
         <span>Playback</span>
-        <strong>{% if paused %}Paused{% else %}Running{% endif %}</strong>
+        <strong>
+          {% if not started %}Ready
+          {% elif countdown_remaining is not none %}Countdown
+          {% elif paused %}Paused
+          {% else %}Running{% endif %}
+        </strong>
       </article>
       <article class="speed-panel">
         <span>Speed</span>
@@ -65,7 +82,7 @@
       <div class="board">
         {% for row in snapshot.board %}
           {% for cell in row %}
-            {% if cell.clickable and snapshot.phase.value == "playing" %}
+            {% if cell.clickable and snapshot.phase.value == "playing" and started and countdown_remaining is none and not paused %}
               <button
                 class="cell tile-{{ cell.tile.value|lower }} clickable"
                 type="button"

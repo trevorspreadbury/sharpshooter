@@ -14,11 +14,10 @@ def test_index_renders_game() -> None:
 
     assert response.status_code == 200
     assert "Sharpshooter" in response.text
-    assert "Level 1 in progress." in response.text
-    assert 'data-fire-url="/fire/0/0"' in response.text
+    assert "Ready to start level 1." in response.text
+    assert 'data-post-url="/start"' in response.text
     assert 'data-async-post="/speed"' in response.text
     assert 'data-post-url="/restart"' in response.text
-    assert 'data-post-url="/pause"' in response.text
     assert 'data-async-post="/level"' in response.text
 
 
@@ -26,6 +25,8 @@ def test_fire_endpoint_updates_board() -> None:
     """Firing removes the clicked orange from the edge."""
     service = GameService()
     client = TestClient(create_app(service=service))
+    service.start()
+    service.countdown_remaining = None
 
     response = client.post("/fire/0/0")
 
@@ -47,6 +48,7 @@ def test_restart_resets_state() -> None:
     assert service.selected_level == 1
     assert len(service.state.level.edge_oranges) == 32
     assert service.speed_multiplier == 1.0
+    assert service.started is False
 
 
 def test_speed_endpoint_updates_multiplier() -> None:
@@ -71,16 +73,31 @@ def test_level_endpoint_restarts_requested_level() -> None:
     assert response.status_code == 200
     assert service.selected_level == 2
     assert service.state.level.level_id == 2
-    assert "Level 2 in progress." in response.text
+    assert "Ready to start level 2." in response.text
 
 
 def test_pause_endpoint_toggles_paused_state() -> None:
     """Pause endpoint toggles paused playback state."""
     service = GameService()
     client = TestClient(create_app(service=service))
+    service.start()
+    service.countdown_remaining = None
 
     response = client.post("/pause")
 
     assert response.status_code == 200
     assert service.paused is True
     assert "Paused" in response.text
+
+
+def test_start_endpoint_arms_countdown() -> None:
+    """Start begins the five-second countdown instead of immediate play."""
+    service = GameService()
+    client = TestClient(create_app(service=service))
+
+    response = client.post("/start")
+
+    assert response.status_code == 200
+    assert service.started is True
+    assert service.countdown_remaining == 5.0
+    assert "Starting in 5.0s" in response.text

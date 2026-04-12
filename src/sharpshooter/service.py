@@ -16,6 +16,7 @@ from sharpshooter.engine import (
 
 SPEED_OPTIONS: tuple[float, ...] = (1.0, 0.5, 0.25, 0.125)
 LEVEL_OPTIONS: tuple[int, ...] = (1, 2)
+COUNTDOWN_SECONDS = 5.0
 
 
 @dataclass(slots=True)
@@ -27,6 +28,8 @@ class GameService:
     selected_level: int = field(default=1, init=False)
     speed_multiplier: float = field(default=1.0, init=False)
     paused: bool = field(default=False, init=False)
+    started: bool = field(default=False, init=False)
+    countdown_remaining: float | None = field(default=None, init=False)
     _last_tick_time: float = field(init=False)
     _remainder: float = field(default=0.0, init=False)
 
@@ -43,12 +46,31 @@ class GameService:
         self.state = GameState(level=create_level_state(target_level))
         self.speed_multiplier = 1.0
         self.paused = False
+        self.started = False
+        self.countdown_remaining = None
         self._last_tick_time = time.monotonic()
         self._remainder = 0.0
 
     def sync(self) -> GameSnapshot:
         """Advance the simulation to the current wall-clock time and return a snapshot."""
         now = time.monotonic()
+        if not self.started:
+            self._last_tick_time = now
+            return self.engine.snapshot(self.state, elapsed_seconds=self._display_elapsed_seconds())
+
+        if self.countdown_remaining is not None:
+            elapsed = now - self._last_tick_time
+            self.countdown_remaining = max(0.0, self.countdown_remaining - elapsed)
+            self._last_tick_time = now
+            if self.countdown_remaining > 0:
+                return self.engine.snapshot(
+                    self.state, elapsed_seconds=self._display_elapsed_seconds()
+                )
+            self.countdown_remaining = None
+            self._last_tick_time = now
+            self._remainder = 0.0
+            return self.engine.snapshot(self.state, elapsed_seconds=self._display_elapsed_seconds())
+
         if self.paused:
             self._last_tick_time = now
             return self.engine.snapshot(self.state, elapsed_seconds=self._display_elapsed_seconds())
@@ -64,7 +86,7 @@ class GameService:
     def fire(self, row: int, col: int) -> GameSnapshot:
         """Fire one orange after syncing runtime state."""
         self.sync()
-        if self.paused:
+        if self.paused or not self.started or self.countdown_remaining is not None:
             return self.engine.snapshot(self.state, elapsed_seconds=self._display_elapsed_seconds())
         self.engine.fire(self.state, row=row, col=col)
         return self.engine.snapshot(self.state, elapsed_seconds=self._display_elapsed_seconds())
@@ -85,8 +107,22 @@ class GameService:
     def toggle_pause(self) -> GameSnapshot:
         """Toggle the paused state and return the latest snapshot."""
         self.sync()
+        if not self.started or self.countdown_remaining is not None:
+            return self.engine.snapshot(self.state, elapsed_seconds=self._display_elapsed_seconds())
         self.paused = not self.paused
         self._last_tick_time = time.monotonic()
+        return self.engine.snapshot(self.state, elapsed_seconds=self._display_elapsed_seconds())
+
+    def start(self) -> GameSnapshot:
+        """Arm the game and begin the pre-level countdown."""
+        self.sync()
+        if self.started and self.countdown_remaining is None:
+            return self.engine.snapshot(self.state, elapsed_seconds=self._display_elapsed_seconds())
+        self.started = True
+        self.paused = False
+        self.countdown_remaining = COUNTDOWN_SECONDS
+        self._last_tick_time = time.monotonic()
+        self._remainder = 0.0
         return self.engine.snapshot(self.state, elapsed_seconds=self._display_elapsed_seconds())
 
     def _display_elapsed_seconds(self) -> float:

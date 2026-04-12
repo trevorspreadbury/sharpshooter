@@ -34,6 +34,8 @@ def create_app(service: GameService | None = None) -> FastAPI:
                 "speed_multiplier": game_service.speed_multiplier,
                 "speed_options": SPEED_OPTIONS,
                 "paused": game_service.paused,
+                "started": game_service.started,
+                "countdown_remaining": game_service.countdown_remaining,
             },
         )
 
@@ -50,6 +52,8 @@ def create_app(service: GameService | None = None) -> FastAPI:
                 "speed_multiplier": game_service.speed_multiplier,
                 "speed_options": SPEED_OPTIONS,
                 "paused": game_service.paused,
+                "started": game_service.started,
+                "countdown_remaining": game_service.countdown_remaining,
             },
         )
 
@@ -72,6 +76,8 @@ def create_app(service: GameService | None = None) -> FastAPI:
                 "speed_multiplier": game_service.speed_multiplier,
                 "speed_options": SPEED_OPTIONS,
                 "paused": game_service.paused,
+                "started": game_service.started,
+                "countdown_remaining": game_service.countdown_remaining,
             },
         )
 
@@ -89,6 +95,8 @@ def create_app(service: GameService | None = None) -> FastAPI:
                 "speed_multiplier": game_service.speed_multiplier,
                 "speed_options": SPEED_OPTIONS,
                 "paused": game_service.paused,
+                "started": game_service.started,
+                "countdown_remaining": game_service.countdown_remaining,
             },
         )
 
@@ -106,6 +114,8 @@ def create_app(service: GameService | None = None) -> FastAPI:
                 "speed_multiplier": game_service.speed_multiplier,
                 "speed_options": SPEED_OPTIONS,
                 "paused": game_service.paused,
+                "started": game_service.started,
+                "countdown_remaining": game_service.countdown_remaining,
             },
         )
 
@@ -123,6 +133,8 @@ def create_app(service: GameService | None = None) -> FastAPI:
                 "speed_multiplier": game_service.speed_multiplier,
                 "speed_options": SPEED_OPTIONS,
                 "paused": game_service.paused,
+                "started": game_service.started,
+                "countdown_remaining": game_service.countdown_remaining,
             },
         )
 
@@ -140,6 +152,27 @@ def create_app(service: GameService | None = None) -> FastAPI:
                 "speed_multiplier": game_service.speed_multiplier,
                 "speed_options": SPEED_OPTIONS,
                 "paused": game_service.paused,
+                "started": game_service.started,
+                "countdown_remaining": game_service.countdown_remaining,
+            },
+        )
+
+    @app.post("/start", response_class=HTMLResponse)
+    async def start(request: Request) -> HTMLResponse:
+        """Start the level countdown and rerender the board."""
+        snapshot = game_service.start()
+        return templates.TemplateResponse(
+            request=request,
+            name="game.html",
+            context={
+                "snapshot": snapshot,
+                "selected_level": game_service.selected_level,
+                "level_options": LEVEL_OPTIONS,
+                "speed_multiplier": game_service.speed_multiplier,
+                "speed_options": SPEED_OPTIONS,
+                "paused": game_service.paused,
+                "started": game_service.started,
+                "countdown_remaining": game_service.countdown_remaining,
             },
         )
 
