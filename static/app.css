@@ -139,13 +139,12 @@ body {
   display: grid;
   cursor: pointer;
   touch-action: manipulation;
-  transform: translateY(0);
-  transition: transform 120ms ease, box-shadow 120ms ease;
+  transition: box-shadow 120ms ease, filter 120ms ease;
   box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.12);
 }
 
 .clickable:hover {
-  transform: translateY(-1px);
+  filter: brightness(1.03);
 }
 
 .tile-o {

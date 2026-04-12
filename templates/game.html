@@ -1,9 +1,4 @@
-<main
-  id="game-shell"
-  hx-get="/snapshot"
-  hx-trigger="every 125ms [!window.sharpshooterPausePolling]"
-  hx-swap="outerHTML"
->
+<main id="game-shell">
   <section class="page">
     <header class="hero">
       <div>
@@ -11,7 +6,7 @@
         <h1>Sharpshooter</h1>
         <p class="status">{{ snapshot.status_text }}</p>
       </div>
-      <form hx-post="/restart" hx-target="#game-shell" hx-swap="outerHTML">
+      <form class="restart-form" data-async-post="/restart">
         <button class="restart" type="submit">Restart</button>
       </form>
     </header>
@@ -35,14 +30,8 @@
       </article>
       <article class="speed-panel">
         <span>Speed</span>
-        <form hx-post="/speed" hx-target="#game-shell" hx-swap="outerHTML">
-          <select
-            name="speed"
-            class="speed-select"
-            onfocus="window.sharpshooterPausePolling = true"
-            onchange="window.sharpshooterPausePolling = false; this.form.requestSubmit()"
-            onblur="window.sharpshooterPausePolling = false"
-          >
+        <form class="speed-form" data-async-post="/speed">
+          <select name="speed" class="speed-select">
             {% for option in speed_options %}
               <option value="{{ option }}" {% if option == speed_multiplier %}selected{% endif %}>
                 {% if option == 1.0 %}Normal{% elif option == 0.5 %}Half{% elif option == 0.25 %}Quarter{% else %}Eighth{% endif %}
@@ -60,11 +49,8 @@
             {% if cell.clickable and snapshot.phase.value == "playing" %}
               <button
                 class="cell tile-{{ cell.tile.value|lower }} clickable"
-                hx-post="/fire/{{ cell.row }}/{{ cell.col }}"
-                hx-target="#game-shell"
-                hx-swap="outerHTML"
-                hx-trigger="mousedown"
                 type="button"
+                data-fire-url="/fire/{{ cell.row }}/{{ cell.col }}"
                 aria-label="Fire orange at row {{ cell.row }}, column {{ cell.col }}"
               >
                 {% if cell.tile.value != "O" %}{{ cell.tile.value }}{% endif %}

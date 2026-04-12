@@ -15,10 +15,8 @@ def test_index_renders_game() -> None:
     assert response.status_code == 200
     assert "Sharpshooter" in response.text
     assert "Level 1 in progress." in response.text
-    assert 'name="speed"' in response.text
-    assert 'onchange="window.sharpshooterPausePolling = false; this.form.requestSubmit()"' in response.text
-    assert 'every 125ms [!window.sharpshooterPausePolling]' in response.text
-    assert 'onfocus="window.sharpshooterPausePolling = true"' in response.text
+    assert 'data-fire-url="/fire/0/0"' in response.text
+    assert 'data-async-post="/speed"' in response.text
 
 
 def test_fire_endpoint_updates_board() -> None:
@@ -29,7 +27,7 @@ def test_fire_endpoint_updates_board() -> None:
     response = client.post("/fire/0/0")
 
     assert response.status_code == 200
-    assert 'hx-post="/fire/0/0"' not in response.text
+    assert 'data-fire-url="/fire/0/0"' not in response.text
     assert service.state.level.projectiles
 
 
