@@ -39,6 +39,11 @@ body {
   margin-bottom: 0.9rem;
 }
 
+.hero-actions {
+  display: flex;
+  gap: 0.65rem;
+}
+
 .hero h1 {
   margin: 0.2rem 0;
   font-size: clamp(2rem, 4vw, 3.4rem);
@@ -59,7 +64,7 @@ body {
 
 .hud {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 0.75rem;
   margin-bottom: 0.9rem;
 }
@@ -171,6 +176,10 @@ body {
   .hero {
     align-items: start;
     flex-direction: column;
+  }
+
+  .hero-actions {
+    width: 100%;
   }
 
   .hud {

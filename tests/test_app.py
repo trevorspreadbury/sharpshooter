@@ -17,6 +17,9 @@ def test_index_renders_game() -> None:
     assert "Level 1 in progress." in response.text
     assert 'data-fire-url="/fire/0/0"' in response.text
     assert 'data-async-post="/speed"' in response.text
+    assert 'data-post-url="/restart"' in response.text
+    assert 'data-post-url="/pause"' in response.text
+    assert 'data-async-post="/level"' in response.text
 
 
 def test_fire_endpoint_updates_board() -> None:
@@ -41,6 +44,7 @@ def test_restart_resets_state() -> None:
 
     assert response.status_code == 200
     assert service.state.level.level_id == 1
+    assert service.selected_level == 1
     assert len(service.state.level.edge_oranges) == 32
     assert service.speed_multiplier == 1.0
 
@@ -55,3 +59,28 @@ def test_speed_endpoint_updates_multiplier() -> None:
     assert response.status_code == 200
     assert service.speed_multiplier == 0.25
     assert '<option value="0.25" selected>' in response.text
+
+
+def test_level_endpoint_restarts_requested_level() -> None:
+    """Selecting a level restarts the game at the chosen level."""
+    service = GameService()
+    client = TestClient(create_app(service=service))
+
+    response = client.post("/level", data={"level": "2"})
+
+    assert response.status_code == 200
+    assert service.selected_level == 2
+    assert service.state.level.level_id == 2
+    assert "Level 2 in progress." in response.text
+
+
+def test_pause_endpoint_toggles_paused_state() -> None:
+    """Pause endpoint toggles paused playback state."""
+    service = GameService()
+    client = TestClient(create_app(service=service))
+
+    response = client.post("/pause")
+
+    assert response.status_code == 200
+    assert service.paused is True
+    assert "Paused" in response.text

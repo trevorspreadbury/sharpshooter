@@ -2,7 +2,7 @@ const POLL_INTERVAL_MS = 125;
 
 const runtimeState = {
   requestInFlight: false,
-  speedSelectFocused: false,
+  controlSelectFocused: false,
   pollHandle: null,
   queuedRequest: null,
 };
@@ -68,7 +68,7 @@ function startPolling() {
   }
 
   runtimeState.pollHandle = window.setInterval(() => {
-    if (runtimeState.requestInFlight || runtimeState.speedSelectFocused) {
+    if (runtimeState.requestInFlight || runtimeState.controlSelectFocused) {
       return;
     }
     requestMarkup("/snapshot", {}, "snapshot");
@@ -76,6 +76,13 @@ function startPolling() {
 }
 
 document.addEventListener("pointerdown", (event) => {
+  const postButton = event.target.closest("[data-post-url]");
+  if (postButton instanceof HTMLButtonElement) {
+    event.preventDefault();
+    requestMarkup(postButton.dataset.postUrl, {method: "POST"}, "action");
+    return;
+  }
+
   const fireButton = event.target.closest("[data-fire-url]");
   if (fireButton instanceof HTMLButtonElement) {
     event.preventDefault();
@@ -99,12 +106,24 @@ document.addEventListener("submit", (event) => {
 
 document.addEventListener("change", (event) => {
   const speedSelect = event.target.closest(".speed-select");
-  if (!(speedSelect instanceof HTMLSelectElement)) {
+  if (speedSelect instanceof HTMLSelectElement) {
+    runtimeState.controlSelectFocused = false;
+    const form = speedSelect.closest("form[data-async-post]");
+    if (form instanceof HTMLFormElement) {
+      requestMarkup(form.dataset.asyncPost, {
+        method: "POST",
+        body: new FormData(form),
+      }, "action");
+    }
     return;
   }
 
-  runtimeState.speedSelectFocused = false;
-  const form = speedSelect.closest("form[data-async-post]");
+  const levelSelect = event.target.closest(".level-select");
+  if (!(levelSelect instanceof HTMLSelectElement)) {
+    return;
+  }
+
+  const form = levelSelect.closest("form[data-async-post]");
   if (!(form instanceof HTMLFormElement)) {
     return;
   }
@@ -116,14 +135,14 @@ document.addEventListener("change", (event) => {
 });
 
 document.addEventListener("focusin", (event) => {
-  if (event.target.closest(".speed-select")) {
-    runtimeState.speedSelectFocused = true;
+  if (event.target.closest(".speed-select, .level-select")) {
+    runtimeState.controlSelectFocused = true;
   }
 });
 
 document.addEventListener("focusout", (event) => {
-  if (event.target.closest(".speed-select")) {
-    runtimeState.speedSelectFocused = false;
+  if (event.target.closest(".speed-select, .level-select")) {
+    runtimeState.controlSelectFocused = false;
   }
 });
 

@@ -6,9 +6,12 @@
         <h1>Sharpshooter</h1>
         <p class="status">{{ snapshot.status_text }}</p>
       </div>
-      <form class="restart-form" data-async-post="/restart">
-        <button class="restart" type="submit">Restart</button>
-      </form>
+      <div class="hero-actions">
+        <button class="restart" type="button" data-post-url="/pause">
+          {% if paused %}Resume{% else %}Pause{% endif %}
+        </button>
+        <button class="restart" type="button" data-post-url="/restart">Restart</button>
+      </div>
     </header>
 
     <section class="hud">
@@ -28,6 +31,10 @@
         <span>Phase</span>
         <strong>{{ snapshot.phase.value.replace("_", " ").title() }}</strong>
       </article>
+      <article>
+        <span>Playback</span>
+        <strong>{% if paused %}Paused{% else %}Running{% endif %}</strong>
+      </article>
       <article class="speed-panel">
         <span>Speed</span>
         <form class="speed-form" data-async-post="/speed">
@@ -35,6 +42,18 @@
             {% for option in speed_options %}
               <option value="{{ option }}" {% if option == speed_multiplier %}selected{% endif %}>
                 {% if option == 1.0 %}Normal{% elif option == 0.5 %}Half{% elif option == 0.25 %}Quarter{% else %}Eighth{% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </form>
+      </article>
+      <article class="speed-panel">
+        <span>Start Level</span>
+        <form class="level-form" data-async-post="/level">
+          <select name="level" class="level-select">
+            {% for option in level_options %}
+              <option value="{{ option }}" {% if option == selected_level %}selected{% endif %}>
+                Level {{ option }}
               </option>
             {% endfor %}
           </select>

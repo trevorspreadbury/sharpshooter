@@ -9,7 +9,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from sharpshooter.service import GameService, SPEED_OPTIONS
+from sharpshooter.service import GameService, LEVEL_OPTIONS, SPEED_OPTIONS
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 
@@ -29,8 +29,11 @@ def create_app(service: GameService | None = None) -> FastAPI:
             name="game.html",
             context={
                 "snapshot": snapshot,
+                "selected_level": game_service.selected_level,
+                "level_options": LEVEL_OPTIONS,
                 "speed_multiplier": game_service.speed_multiplier,
                 "speed_options": SPEED_OPTIONS,
+                "paused": game_service.paused,
             },
         )
 
@@ -42,8 +45,11 @@ def create_app(service: GameService | None = None) -> FastAPI:
             name="index.html",
             context={
                 "snapshot": game_service.sync(),
+                "selected_level": game_service.selected_level,
+                "level_options": LEVEL_OPTIONS,
                 "speed_multiplier": game_service.speed_multiplier,
                 "speed_options": SPEED_OPTIONS,
+                "paused": game_service.paused,
             },
         )
 
@@ -61,8 +67,11 @@ def create_app(service: GameService | None = None) -> FastAPI:
             name="game.html",
             context={
                 "snapshot": snapshot,
+                "selected_level": game_service.selected_level,
+                "level_options": LEVEL_OPTIONS,
                 "speed_multiplier": game_service.speed_multiplier,
                 "speed_options": SPEED_OPTIONS,
+                "paused": game_service.paused,
             },
         )
 
@@ -75,8 +84,11 @@ def create_app(service: GameService | None = None) -> FastAPI:
             name="game.html",
             context={
                 "snapshot": game_service.sync(),
+                "selected_level": game_service.selected_level,
+                "level_options": LEVEL_OPTIONS,
                 "speed_multiplier": game_service.speed_multiplier,
                 "speed_options": SPEED_OPTIONS,
+                "paused": game_service.paused,
             },
         )
 
@@ -89,8 +101,45 @@ def create_app(service: GameService | None = None) -> FastAPI:
             name="game.html",
             context={
                 "snapshot": snapshot,
+                "selected_level": game_service.selected_level,
+                "level_options": LEVEL_OPTIONS,
                 "speed_multiplier": game_service.speed_multiplier,
                 "speed_options": SPEED_OPTIONS,
+                "paused": game_service.paused,
+            },
+        )
+
+    @app.post("/level", response_class=HTMLResponse)
+    async def set_level(request: Request, level: int = Form(...)) -> HTMLResponse:
+        """Switch to the selected level and rerender the board."""
+        snapshot = game_service.set_level(level)
+        return templates.TemplateResponse(
+            request=request,
+            name="game.html",
+            context={
+                "snapshot": snapshot,
+                "selected_level": game_service.selected_level,
+                "level_options": LEVEL_OPTIONS,
+                "speed_multiplier": game_service.speed_multiplier,
+                "speed_options": SPEED_OPTIONS,
+                "paused": game_service.paused,
+            },
+        )
+
+    @app.post("/pause", response_class=HTMLResponse)
+    async def toggle_pause(request: Request) -> HTMLResponse:
+        """Toggle pause/resume and rerender the board."""
+        snapshot = game_service.toggle_pause()
+        return templates.TemplateResponse(
+            request=request,
+            name="game.html",
+            context={
+                "snapshot": snapshot,
+                "selected_level": game_service.selected_level,
+                "level_options": LEVEL_OPTIONS,
+                "speed_multiplier": game_service.speed_multiplier,
+                "speed_options": SPEED_OPTIONS,
+                "paused": game_service.paused,
             },
         )
 
